@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.rag.pipeline import generate_answer
 from app.schemas.question import QuestionRequest
@@ -8,6 +9,18 @@ app = FastAPI(
     title="EduRAG API",
     description="Academic Question Answering System using RAG",
     version="1.0.0",
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
