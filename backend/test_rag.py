@@ -1,14 +1,10 @@
 from app.rag.pipeline import generate_answer
 
-
-question = "What are the binary search trees?"
-
+question = "What are the features of HTML?"
 
 print("\nRunning EduRAG...\n")
 
-
 result = generate_answer(question)
-
 
 print("=" * 70)
 print("EDURAG ANSWER")
@@ -16,16 +12,15 @@ print("=" * 70)
 
 print(result["answer"])
 
-
 print("\n")
 print("=" * 70)
 print("SOURCES")
 print("=" * 70)
 
 
-for document in result["documents"]:
+for source in result["sources"]:
 
-    source = document.metadata.get("source")
-    page = document.metadata.get("page")
-
-    print(f"- {source}, Page {page}")
+    print(
+        f"- {source['source']}, "
+        f"Page {source['page']}"
+    )

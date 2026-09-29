@@ -60,7 +60,6 @@ def build_context(documents):
 
     return "\n\n---\n\n".join(context_parts)
 
-
 def generate_answer(question: str):
     """
     Complete RAG pipeline:
@@ -74,6 +73,8 @@ def generate_answer(question: str):
     Prompt
         ↓
     Gemini answer
+        ↓
+    Structured response
     """
 
     documents = retrieve_documents(question)
@@ -98,7 +99,21 @@ def generate_answer(question: str):
             if isinstance(block, dict)
         )
 
+    sources = []
+
+    for document in documents:
+
+        source = document.metadata.get("source", "Unknown")
+        page = document.metadata.get("page", "Unknown")
+
+        sources.append(
+            {
+                "source": source,
+                "page": page,
+            }
+        )
+
     return {
         "answer": answer,
-        "documents": documents,
+        "sources": sources,
     }
