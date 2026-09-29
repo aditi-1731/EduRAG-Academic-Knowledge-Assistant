@@ -3,3 +3,5 @@ pymupdf
 langchain-text-splitters
 langchain-google-genai
 langchain-chroma
+fastapi
+uvicorn
