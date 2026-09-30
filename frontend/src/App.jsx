@@ -22,14 +22,17 @@ function App() {
 
         <section className="hero">
 
+          <div className="hero-badge">
+            AI-Powered Academic Assistant
+          </div>
+
           <h2>
-            Learn from your study material.
+            Ask. Learn. Understand.
           </h2>
 
           <p>
-            EduRAG uses Retrieval-Augmented Generation
-            to answer academic questions using your
-            provided documents.
+            Ask questions from your study material and get
+            clear, context-based answers with source references.
           </p>
 
         </section>

@@ -1,11 +1,9 @@
 import { useState } from "react";
 
-
 function QuestionBox({ onResult }) {
 
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
-
 
   const askQuestion = async () => {
 
@@ -13,9 +11,8 @@ function QuestionBox({ onResult }) {
       return;
     }
 
-
     setLoading(true);
-
+    onResult(null);
 
     try {
 
@@ -29,14 +26,12 @@ function QuestionBox({ onResult }) {
           },
 
           body: JSON.stringify({
-            question: question,
+            question: question.trim(),
           }),
         }
       );
 
-
       const data = await response.json();
-
 
       if (!response.ok) {
 
@@ -47,10 +42,9 @@ function QuestionBox({ onResult }) {
         return;
       }
 
-
       onResult(data);
 
-    } catch (error) {
+    } catch {
 
       onResult({
         error: "Unable to connect to the EduRAG server.",
@@ -63,49 +57,66 @@ function QuestionBox({ onResult }) {
     }
   };
 
-
   return (
     <section className="question-section">
 
-      <h2>Ask a Question</h2>
+      <div className="question-heading">
 
-      <p className="section-description">
-        Ask a question from your academic study material.
-      </p>
+        <div>
+          <h2>Ask a Question</h2>
 
+          <p className="section-description">
+            Ask a question from your academic study material.
+          </p>
+        </div>
+
+        <span className="question-hint">
+          Press the button to ask
+        </span>
+
+      </div>
 
       <textarea
         className="question-input"
-
         placeholder="For example: What is HTML?"
-
         rows="5"
-
         value={question}
-
         onChange={(event) =>
           setQuestion(event.target.value)
         }
-
         disabled={loading}
       />
 
+      <div className="question-footer">
 
-      <button
-        className="ask-button"
+        <span className="question-length">
+          {question.length} characters
+        </span>
 
-        onClick={askQuestion}
+        <button
+          className="ask-button"
+          onClick={askQuestion}
+          disabled={loading || !question.trim()}
+        >
 
-        disabled={loading || !question.trim()}
-      >
+          {loading ? (
+            <span className="loading-content">
 
-        {loading ? "Thinking..." : "Ask EduRAG"}
+              <span className="spinner"></span>
 
-      </button>
+              Thinking...
+
+            </span>
+          ) : (
+            "Ask EduRAG"
+          )}
+
+        </button>
+
+      </div>
 
     </section>
   );
 }
-
 
 export default QuestionBox;
