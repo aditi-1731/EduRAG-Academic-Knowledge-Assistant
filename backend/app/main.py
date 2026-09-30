@@ -23,6 +23,8 @@ from app.services.security import (
     verify_password,
 )
 
+from app.services.auth import get_current_user
+
 app = FastAPI(
     title="EduRAG API",
     description="Academic Question Answering System using RAG",
@@ -114,6 +116,12 @@ def login_user(
         "access_token": access_token,
         "token_type": "bearer",
     }
+
+@app.get("/me", response_model=UserResponse)
+def get_me(
+    current_user: User = Depends(get_current_user),
+):
+    return current_user
 
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
