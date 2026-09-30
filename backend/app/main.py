@@ -9,8 +9,19 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserRegister, UserResponse
-from app.services.security import hash_password
+
+from app.schemas.user import (
+    UserLogin,
+    UserRegister,
+    UserResponse,
+    TokenResponse,
+)
+
+from app.services.security import (
+    create_access_token,
+    hash_password,
+    verify_password,
+)
 
 app = FastAPI(
     title="EduRAG API",
@@ -70,6 +81,39 @@ def register_user(
     db.refresh(new_user)
 
     return new_user
+
+@app.post("/login", response_model=TokenResponse)
+def login_user(
+    user_data: UserLogin,
+    db: Session = Depends(get_db),
+):
+    user = db.scalar(
+        select(User).where(
+            User.email == user_data.email
+        )
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password.",
+        )
+
+    if not verify_password(
+        user_data.password,
+        user.hashed_password,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password.",
+        )
+
+    access_token = create_access_token(user.id)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
 
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
