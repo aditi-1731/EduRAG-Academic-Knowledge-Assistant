@@ -1,3 +1,6 @@
+import ReactMarkdown from "react-markdown";
+
+
 function AnswerCard({ result }) {
 
   if (!result) {
@@ -8,7 +11,6 @@ function AnswerCard({ result }) {
         <div className="section-heading">
           <h2>Answer</h2>
         </div>
-
 
         <div className="answer-card empty-card">
 
@@ -44,7 +46,6 @@ function AnswerCard({ result }) {
         <div className="section-heading">
           <h2>Answer</h2>
         </div>
-
 
         <div className="answer-card error-card">
 
@@ -86,7 +87,6 @@ function AnswerCard({ result }) {
 
       </div>
 
-
       <div className="answer-card answer-content">
 
         <div className="answer-mark">
@@ -94,7 +94,11 @@ function AnswerCard({ result }) {
         </div>
 
         <div className="answer-text">
-          {result.answer}
+
+          <ReactMarkdown>
+            {result.answer}
+          </ReactMarkdown>
+
         </div>
 
       </div>
@@ -102,6 +106,5 @@ function AnswerCard({ result }) {
     </section>
   );
 }
-
 
 export default AnswerCard;
