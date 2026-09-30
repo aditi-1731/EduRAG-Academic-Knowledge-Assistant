@@ -3,39 +3,53 @@ function AnswerCard({ result }) {
   if (!result) {
     return (
       <section className="answer-section">
-
-        <h2>Answer</h2>
-
-        <div className="answer-card">
-          <p>
-            Your answer will appear here after you ask a question.
-          </p>
+        <div className="section-heading">
+          <h2>Answer</h2>
         </div>
 
+        <div className="answer-card empty-card">
+          <div className="empty-icon">?</div>
+
+          <div>
+            <h3>No question asked yet</h3>
+            <p>
+              Ask something from your study material and
+              EduRAG will generate an answer here.
+            </p>
+          </div>
+        </div>
       </section>
     );
   }
-
 
   if (result.error) {
     return (
       <section className="answer-section">
-
-        <h2>Answer</h2>
-
-        <div className="answer-card error-card">
-          <p>{result.error}</p>
+        <div className="section-heading">
+          <h2>Answer</h2>
         </div>
 
+        <div className="answer-card error-card">
+          <div className="error-icon">!</div>
+
+          <div>
+            <h3>Unable to generate answer</h3>
+            <p>{result.error}</p>
+          </div>
+        </div>
       </section>
     );
   }
 
-
   return (
     <section className="answer-section">
 
-      <h2>Answer</h2>
+      <div className="section-heading">
+        <h2>Answer</h2>
+        <span className="answer-badge">
+          AI Generated
+        </span>
+      </div>
 
       <div className="answer-card">
         <p>{result.answer}</p>
@@ -44,6 +58,5 @@ function AnswerCard({ result }) {
     </section>
   );
 }
-
 
 export default AnswerCard;

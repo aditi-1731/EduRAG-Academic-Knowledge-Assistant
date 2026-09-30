@@ -7,7 +7,6 @@ import Sources from "./components/Sources";
 
 import "./App.css";
 
-
 function App() {
 
   const [result, setResult] = useState(null);
