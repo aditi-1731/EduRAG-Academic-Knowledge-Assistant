@@ -17,7 +17,6 @@ print("=" * 70)
 print("SOURCES")
 print("=" * 70)
 
-
 for source in result["sources"]:
 
     print(

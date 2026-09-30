@@ -1,9 +1,7 @@
 from app.services.embeddings import get_embeddings
 from langchain_chroma import Chroma
 
-
 VECTORSTORE_DIR = "vectorstore"
-
 
 print("Loading ChromaDB vector store...")
 
@@ -15,9 +13,7 @@ vector_store = Chroma(
     persist_directory=VECTORSTORE_DIR,
 )
 
-
 query = "What is HTML?"
-
 
 print(f"\nQuery: {query}")
 
@@ -26,9 +22,7 @@ results = vector_store.similarity_search(
     k=3,
 )
 
-
 print(f"\nRetrieved {len(results)} chunks:\n")
-
 
 for index, document in enumerate(results, start=1):
 

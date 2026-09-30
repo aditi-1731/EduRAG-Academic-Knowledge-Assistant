@@ -1,8 +1,6 @@
 from app.services.pdf_loader import load_pdf
 
-
 PDF_PATH = "data/documents/WT_Unit_1.pdf"
-
 
 documents = load_pdf(PDF_PATH)
 

@@ -5,3 +5,8 @@ langchain-google-genai
 langchain-chroma
 fastapi
 uvicorn
+sqlalchemy
+psycopg2-binary
+pwdlib[argon2]
+email-validator
+PyJWT

@@ -1,6 +1,5 @@
 from app.services.embeddings import get_embeddings
 
-
 embeddings = get_embeddings()
 
 text = "Web technology includes HTML, CSS and JavaScript."

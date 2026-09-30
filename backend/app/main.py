@@ -1,9 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.rag.pipeline import generate_answer
 from app.schemas.question import QuestionRequest
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.user import User
+from app.schemas.user import UserRegister, UserResponse
+from app.services.security import hash_password
 
 app = FastAPI(
     title="EduRAG API",
@@ -35,6 +42,34 @@ def health_check():
         "status": "healthy"
     }
 
+@app.post("/register", response_model=UserResponse)
+def register_user(
+    user_data: UserRegister,
+    db: Session = Depends(get_db),
+):
+    existing_user = db.scalar(
+        select(User).where(
+            User.email == user_data.email
+        )
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email is already registered.",
+        )
+
+    new_user = User(
+        email=user_data.email,
+        full_name=user_data.full_name,
+        hashed_password=hash_password(user_data.password),
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
 
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
