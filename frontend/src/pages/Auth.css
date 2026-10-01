@@ -1,0 +1,228 @@
+.auth-page {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  background: #f8fafc;
+}
+
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+
+  padding: 36px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+
+.auth-header {
+  text-align: center;
+
+  margin-bottom: 30px;
+}
+
+
+.auth-header h1 {
+  margin: 0;
+
+  font-size: 32px;
+
+  color: #2563eb;
+}
+
+
+.auth-header p {
+  margin: 8px 0 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+}
+
+
+.auth-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+
+.form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.form-group label {
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #334155;
+}
+
+
+.form-group input {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 8px;
+
+  outline: none;
+
+  font-size: 14px;
+
+  color: #1e293b;
+
+  background: #ffffff;
+
+  transition: border-color 0.2s ease;
+}
+
+
+.form-group input:focus {
+  border-color: #2563eb;
+}
+
+
+.auth-button {
+  width: 100%;
+
+  margin-top: 4px;
+
+  padding: 12px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #2563eb;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.auth-button:hover {
+  background: #1d4ed8;
+}
+
+
+.auth-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+}
+
+
+.auth-error {
+  padding: 10px 12px;
+
+  border-radius: 7px;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+
+  font-size: 13px;
+}
+
+
+.auth-success {
+  padding: 10px 12px;
+
+  border-radius: 7px;
+
+  background: #f0fdf4;
+
+  color: #15803d;
+
+  font-size: 13px;
+}
+
+
+.auth-footer {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  margin-top: 24px;
+
+  font-size: 14px;
+
+  color: #64748b;
+}
+
+
+.auth-footer button {
+  padding: 0;
+
+  border: none;
+
+  background: none;
+
+  color: #2563eb;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+  font-size: 16px;
+}
