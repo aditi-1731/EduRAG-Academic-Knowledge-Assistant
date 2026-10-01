@@ -1,5 +1,6 @@
 from app.database import Base, engine
 from app.models.user import User
+from app.models.document import Document
 
 
 print("Creating database tables...")

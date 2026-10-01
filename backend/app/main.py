@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
+from app.models.document import Document
 
 from app.schemas.user import (
     UserLogin,
@@ -24,6 +25,20 @@ from app.services.security import (
 )
 
 from app.services.auth import get_current_user
+
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import File, UploadFile
+
+from app.schemas.document import DocumentUploadResponse
+from app.services.document_service import process_uploaded_pdf
+
+UPLOAD_DIR = Path("data/uploads")
+UPLOAD_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
 
 app = FastAPI(
     title="EduRAG API",
@@ -147,3 +162,135 @@ def ask_question(request: QuestionRequest):
             status_code=500,
             detail="An error occurred while processing the question.",
         )
+
+@app.post(
+    "/upload",
+    response_model=DocumentUploadResponse,
+)
+async def upload_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed.",
+        )
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A filename is required.",
+        )
+
+    safe_filename = (
+        f"{uuid4()}_{file.filename}"
+    )
+
+    file_path = UPLOAD_DIR / safe_filename
+
+    try:
+        file_content = await file.read()
+
+        if not file_content:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded PDF is empty.",
+            )
+
+        with open(file_path, "wb") as uploaded_file:
+            uploaded_file.write(file_content)
+
+        result = process_uploaded_pdf(
+            str(file_path),
+            file.filename,
+        )
+
+        document = Document(
+            user_id=current_user.id,
+            filename=result["filename"],
+            page_count=result["pages"],
+            chunk_count=result["chunks"],
+        )
+
+        db.add(document)
+        db.commit()
+        db.refresh(document)
+
+        return {
+            "message": "PDF uploaded and processed successfully.",
+            **result,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process PDF: {error}",
+        )
+
+    finally:
+        if file_path.exists():
+            file_path.unlink()
+            
+async def upload_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    if file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed.",
+        )
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A filename is required.",
+        )
+
+    safe_filename = (
+        f"{uuid4()}_{file.filename}"
+    )
+
+    file_path = UPLOAD_DIR / safe_filename
+
+    try:
+        file_content = await file.read()
+
+        if not file_content:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded PDF is empty.",
+            )
+
+        with open(file_path, "wb") as uploaded_file:
+            uploaded_file.write(file_content)
+
+        result = process_uploaded_pdf(
+            str(file_path),
+            file.filename,
+        )
+
+        return {
+            "message": "PDF uploaded and processed successfully.",
+            **result,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process PDF: {error}",
+        )
+
+    finally:
+        if file_path.exists():
+            file_path.unlink()

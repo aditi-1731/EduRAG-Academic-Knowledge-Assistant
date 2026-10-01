@@ -20,6 +20,7 @@ vectorstore/
 
 # Processed/generated files
 data/processed/
+data/uploads/
 
 # Logs
 *.log
