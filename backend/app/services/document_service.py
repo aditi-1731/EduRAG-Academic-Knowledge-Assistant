@@ -2,11 +2,11 @@ from app.services.pdf_loader import load_pdf
 from app.services.text_splitter import split_documents
 from app.services.vector_store import create_vector_store
 
-
 def process_uploaded_pdf(
     file_path: str,
     filename: str,
     user_id: int,
+    document_id : int,
 ) -> dict:
     documents = load_pdf(file_path)
 
@@ -23,8 +23,10 @@ def process_uploaded_pdf(
         )
 
     for chunk in chunks:
+        chunk["metadata"]["source"] = filename
         chunk["metadata"]["user_id"] = user_id
-
+        chunk["metadata"]["document_id"]=document_id
+        
     create_vector_store(chunks)
 
     return {

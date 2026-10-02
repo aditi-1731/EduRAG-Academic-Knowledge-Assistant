@@ -31,7 +31,11 @@ from uuid import uuid4
 
 from fastapi import File, UploadFile
 
-from app.schemas.document import DocumentUploadResponse
+from app.schemas.document import (
+    DocumentUploadResponse,
+    DocumentResponse,
+)
+
 from app.services.document_service import process_uploaded_pdf
 
 UPLOAD_DIR = Path("data/uploads")
@@ -147,6 +151,7 @@ def ask_question(
         result = generate_answer(
             request.question,
             current_user.id,
+            request.document_id,
         )
 
         return result
@@ -170,7 +175,7 @@ def ask_question(
             status_code=500,
             detail=f"Failed to generate answer: {error}",
         )
-    
+
 @app.post(
     "/upload",
     response_model=DocumentUploadResponse,
@@ -210,29 +215,42 @@ async def upload_document(
         with open(file_path, "wb") as uploaded_file:
             uploaded_file.write(file_content)
 
+        # Create the document record first so that
+        # PostgreSQL generates the document ID.
+        document = Document(
+            user_id=current_user.id,
+            filename=file.filename,
+            page_count=0,
+            chunk_count=0,
+        )
+
+        db.add(document)
+        db.flush()
+
+        # Process the PDF and attach both user ID
+        # and document ID to the vector metadata.
         result = process_uploaded_pdf(
             str(file_path),
             file.filename,
             current_user.id,
+            document.id,
         )
 
-        document = Document(
-            user_id=current_user.id,
-            filename=result["filename"],
-            page_count=result["pages"],
-            chunk_count=result["chunks"],
-        )
+        # Update document information after processing.
+        document.page_count = result["pages"]
+        document.chunk_count = result["chunks"]
 
-        db.add(document)
         db.commit()
         db.refresh(document)
 
         return {
             "message": "PDF uploaded and processed successfully.",
+            "document_id":document.id,
             **result,
         }
 
     except HTTPException:
+        db.rollback()
         raise
 
     except Exception as error:
@@ -246,60 +264,21 @@ async def upload_document(
     finally:
         if file_path.exists():
             file_path.unlink()
-            
-async def upload_document(
-    file: UploadFile = File(...),
+
+@app.get(
+    "/documents",
+    response_model=list[DocumentResponse],
+)
+def get_documents(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    if file.content_type != "application/pdf":
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF files are allowed.",
+    documents = db.scalars(
+        select(Document)
+        .where(
+            Document.user_id == current_user.id
         )
+        .order_by(Document.uploaded_at.desc())
+    ).all()
 
-    if not file.filename:
-        raise HTTPException(
-            status_code=400,
-            detail="A filename is required.",
-        )
-
-    safe_filename = (
-        f"{uuid4()}_{file.filename}"
-    )
-
-    file_path = UPLOAD_DIR / safe_filename
-
-    try:
-        file_content = await file.read()
-
-        if not file_content:
-            raise HTTPException(
-                status_code=400,
-                detail="The uploaded PDF is empty.",
-            )
-
-        with open(file_path, "wb") as uploaded_file:
-            uploaded_file.write(file_content)
-
-        result = process_uploaded_pdf(
-            str(file_path),
-            file.filename,
-        )
-
-        return {
-            "message": "PDF uploaded and processed successfully.",
-            **result,
-        }
-
-    except HTTPException:
-        raise
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process PDF: {error}",
-        )
-
-    finally:
-        if file_path.exists():
-            file_path.unlink()
+    return documents

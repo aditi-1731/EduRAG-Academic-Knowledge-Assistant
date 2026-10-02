@@ -1,13 +1,20 @@
 import { useState } from "react";
 
-function QuestionBox({ onResult }) {
+import { useAuth } from "../context/useAuth";
+
+function QuestionBox({ onResult, documentId }) {
+  const { token } = useAuth();
 
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
 
   const askQuestion = async () => {
+    if (!question.trim()) return;
 
-    if (!question.trim()) {
+    if (!documentId) {
+      onResult({
+        error: "Please select a study material first.",
+      });
       return;
     }
 
@@ -15,7 +22,6 @@ function QuestionBox({ onResult }) {
     onResult(null);
 
     try {
-
       const response = await fetch(
         "http://127.0.0.1:8000/ask",
         {
@@ -23,10 +29,12 @@ function QuestionBox({ onResult }) {
 
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
 
           body: JSON.stringify({
             question: question.trim(),
+            document_id: documentId,
           }),
         }
       );
@@ -34,87 +42,59 @@ function QuestionBox({ onResult }) {
       const data = await response.json();
 
       if (!response.ok) {
-
         onResult({
-          error: data.detail || "Something went wrong.",
+          error:
+            data.detail ||
+            "Something went wrong.",
         });
 
         return;
       }
 
       onResult(data);
-
     } catch {
-
       onResult({
-        error: "Unable to connect to the EduRAG server.",
+        error:
+          "Unable to connect to the EduRAG server.",
       });
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
   return (
     <section className="question-section">
-
       <div className="question-heading">
+        <h2>Ask a Question</h2>
 
-        <div>
-          <h2>Ask a Question</h2>
-
-          <p className="section-description">
-            Ask a question from your academic study material.
-          </p>
-        </div>
-
-        <span className="question-hint">
-          Press the button to ask
-        </span>
-
+        <p>
+          Ask questions related to the study material you uploaded.
+        </p>
       </div>
 
       <textarea
-        className="question-input"
-        placeholder="For example: What is HTML?"
-        rows="5"
         value={question}
         onChange={(event) =>
           setQuestion(event.target.value)
         }
+        placeholder="Ask a question about your uploaded PDF..."
+        rows={5}
         disabled={loading}
       />
 
-      <div className="question-footer">
-
-        <span className="question-length">
-          {question.length} characters
-        </span>
-
-        <button
-          className="ask-button"
-          onClick={askQuestion}
-          disabled={loading || !question.trim()}
-        >
-
-          {loading ? (
-            <span className="loading-content">
-
-              <span className="spinner"></span>
-
-              Thinking...
-
-            </span>
-          ) : (
-            "Ask EduRAG"
-          )}
-
-        </button>
-
-      </div>
-
+      <button
+        type="button"
+        onClick={askQuestion}
+        disabled={
+          loading ||
+          !question.trim() ||
+          !documentId
+        }
+      >
+        {loading
+          ? "Processing Question..."
+          : "Ask EduRAG"}
+      </button>
     </section>
   );
 }

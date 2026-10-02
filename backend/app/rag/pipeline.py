@@ -27,11 +27,12 @@ def get_vector_store():
 def retrieve_documents(
     question: str,
     user_id: int,
+    document_id: int,
     k: int = 3,
 ):
     """
-    Retrieve only document chunks belonging
-    to the authenticated user.
+    Retrieve only chunks belonging to the
+    authenticated user and selected document.
     """
 
     vector_store = get_vector_store()
@@ -39,7 +40,12 @@ def retrieve_documents(
     results = vector_store.similarity_search(
         question,
         k=k,
-        filter={"user_id": user_id},
+        filter={
+            "$and": [
+                {"user_id": user_id},
+                {"document_id": document_id},
+            ]
+        },
     )
 
     return results
@@ -47,8 +53,8 @@ def retrieve_documents(
 
 def build_context(documents):
     """
-    Combine retrieved document chunks into a single
-    context string for the LLM.
+    Combine retrieved document chunks into a
+    single context string for the LLM.
     """
 
     context_parts = []
@@ -76,13 +82,14 @@ def build_context(documents):
 def generate_answer(
     question: str,
     user_id: int,
+    document_id: int,
 ):
     """
-    Complete user-specific RAG pipeline:
+    Complete document-specific RAG pipeline:
 
     Question
         ↓
-    User-specific Retrieval
+    User + Document-specific Retrieval
         ↓
     Context construction
         ↓
@@ -96,6 +103,7 @@ def generate_answer(
     documents = retrieve_documents(
         question,
         user_id,
+        document_id,
     )
 
     context = build_context(documents)
@@ -121,7 +129,6 @@ def generate_answer(
     sources = []
 
     for document in documents:
-
         source = document.metadata.get(
             "source",
             "Unknown",
