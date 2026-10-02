@@ -24,10 +24,14 @@ def get_vector_store():
     return vector_store
 
 
-def retrieve_documents(question: str, k: int = 3):
+def retrieve_documents(
+    question: str,
+    user_id: int,
+    k: int = 3,
+):
     """
-    Retrieve the most relevant document chunks
-    for the given question.
+    Retrieve only document chunks belonging
+    to the authenticated user.
     """
 
     vector_store = get_vector_store()
@@ -35,6 +39,7 @@ def retrieve_documents(question: str, k: int = 3):
     results = vector_store.similarity_search(
         question,
         k=k,
+        filter={"user_id": user_id},
     )
 
     return results
@@ -49,8 +54,15 @@ def build_context(documents):
     context_parts = []
 
     for document in documents:
-        source = document.metadata.get("source", "Unknown")
-        page = document.metadata.get("page", "Unknown")
+        source = document.metadata.get(
+            "source",
+            "Unknown",
+        )
+
+        page = document.metadata.get(
+            "page",
+            "Unknown",
+        )
 
         context_parts.append(
             f"Source: {source}\n"
@@ -60,13 +72,17 @@ def build_context(documents):
 
     return "\n\n---\n\n".join(context_parts)
 
-def generate_answer(question: str):
+
+def generate_answer(
+    question: str,
+    user_id: int,
+):
     """
-    Complete RAG pipeline:
+    Complete user-specific RAG pipeline:
 
     Question
         ↓
-    Retrieval
+    User-specific Retrieval
         ↓
     Context construction
         ↓
@@ -77,7 +93,10 @@ def generate_answer(question: str):
     Structured response
     """
 
-    documents = retrieve_documents(question)
+    documents = retrieve_documents(
+        question,
+        user_id,
+    )
 
     context = build_context(documents)
 
@@ -103,8 +122,15 @@ def generate_answer(question: str):
 
     for document in documents:
 
-        source = document.metadata.get("source", "Unknown")
-        page = document.metadata.get("page", "Unknown")
+        source = document.metadata.get(
+            "source",
+            "Unknown",
+        )
+
+        page = document.metadata.get(
+            "page",
+            "Unknown",
+        )
 
         sources.append(
             {

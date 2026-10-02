@@ -6,6 +6,7 @@ from app.services.vector_store import create_vector_store
 def process_uploaded_pdf(
     file_path: str,
     filename: str,
+    user_id: int,
 ) -> dict:
     documents = load_pdf(file_path)
 
@@ -20,6 +21,9 @@ def process_uploaded_pdf(
         raise ValueError(
             "No text chunks could be created from the PDF."
         )
+
+    for chunk in chunks:
+        chunk["metadata"]["user_id"] = user_id
 
     create_vector_store(chunks)
 

@@ -139,30 +139,38 @@ def get_me(
     return current_user
 
 @app.post("/ask")
-def ask_question(request: QuestionRequest):
-
+def ask_question(
+    request: QuestionRequest,
+    current_user: User = Depends(get_current_user),
+):
     try:
-
-        result = generate_answer(request.question)
+        result = generate_answer(
+            request.question,
+            current_user.id,
+        )
 
         return result
 
-    except Exception as error:
+    except HTTPException:
+        raise
 
+    except Exception as error:
         error_message = str(error)
 
-        if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
+        if "429" in error_message:
             raise HTTPException(
                 status_code=429,
-                detail="Gemini API quota has been exceeded. Please try again later.",
+                detail=(
+                    "Gemini API quota has been exceeded. "
+                    "Please try again later."
+                ),
             )
 
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while processing the question.",
+            detail=f"Failed to generate answer: {error}",
         )
-
+    
 @app.post(
     "/upload",
     response_model=DocumentUploadResponse,
@@ -205,6 +213,7 @@ async def upload_document(
         result = process_uploaded_pdf(
             str(file_path),
             file.filename,
+            current_user.id,
         )
 
         document = Document(
