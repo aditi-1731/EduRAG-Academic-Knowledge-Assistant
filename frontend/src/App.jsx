@@ -6,6 +6,7 @@ import QuestionBox from "./components/QuestionBox";
 import AnswerCard from "./components/AnswerCard";
 import Sources from "./components/Sources";
 import DocumentUpload from "./components/DocumentUpload";
+import DocumentList from "./components/DocumentList";
 
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -16,6 +17,7 @@ import "./App.css";
 function Home() {
   const [result, setResult] = useState(null);
   const [documentId, setDocumentId] = useState(null);
+  const [documentsRefresh, setDocumentsRefresh] = useState(0);
 
   return (
     <div className="app">
@@ -36,13 +38,23 @@ function Home() {
           </p>
         </section>
 
-        <DocumentUpload onUploadSuccess={setDocumentId}/>
+        <DocumentList refreshTrigger={documentsRefresh}/>
 
-        <QuestionBox onResult={setResult} documentId={documentId}/>
+        <div className="main-panel">
+          <DocumentUpload onUploadSuccess={(newDocumentId) => {
+            setDocumentId(newDocumentId);
+            setDocumentsRefresh(
+            (previous) => previous + 1
+          );}}/>
 
-        <AnswerCard result={result} />
+          <QuestionBox
+            onResult={setResult}
+            documentId={documentId}
+          />
 
-        <Sources result={result} />
+          <AnswerCard result={result} />
+          <Sources result={result} />
+        </div>
       </main>
 
       <footer className="footer">

@@ -90,8 +90,7 @@ function DocumentUpload({onUploadSuccess}) {
           <h2>Upload Study Material</h2>
 
           <p>
-            Upload a PDF to add it to your academic
-            knowledge base.
+            Upload a PDF to study from it with EduRAG.
           </p>
         </div>
       </div>
@@ -117,7 +116,7 @@ function DocumentUpload({onUploadSuccess}) {
           disabled={loading || !file}
         >
           {loading
-            ? "Uploading..."
+            ? "Processing PDF..."
             : "Upload PDF"}
         </button>
       </div>
