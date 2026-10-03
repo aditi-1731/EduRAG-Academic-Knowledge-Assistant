@@ -1,7 +1,11 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.rag.pipeline import generate_answer
+from app.rag.pipeline import (
+    generate_answer,
+    delete_document_vectors,
+)
+
 from app.schemas.question import QuestionRequest
 
 from sqlalchemy import select
@@ -282,3 +286,47 @@ def get_documents(
     ).all()
 
     return documents
+
+@app.delete("/documents/{document_id}")
+def delete_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    document = db.scalar(
+        select(Document)
+        .where(
+            Document.id == document_id,
+            Document.user_id == current_user.id,
+        )
+    )
+
+    if not document:
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found.",
+        )
+
+    try:
+        delete_document_vectors(
+            user_id=current_user.id,
+            document_id=document.id,
+        )
+
+        db.delete(document)
+        db.commit()
+
+        return {
+            "message": "Document deleted successfully."
+        }
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete document: {error}",
+        )

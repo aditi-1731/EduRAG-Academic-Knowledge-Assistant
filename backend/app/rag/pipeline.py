@@ -1,18 +1,15 @@
+import time
 from langchain_chroma import Chroma
 
 from app.services.embeddings import get_embeddings
 from app.services.llm import get_llm
 from app.rag.prompts import ACADEMIC_RAG_PROMPT
-
+from functools import lru_cache
 
 VECTORSTORE_DIR = "vectorstore"
 
-
+@lru_cache(maxsize=1)
 def get_vector_store():
-    """
-    Load the existing ChromaDB vector store.
-    """
-
     embeddings = get_embeddings()
 
     vector_store = Chroma(
@@ -23,12 +20,11 @@ def get_vector_store():
 
     return vector_store
 
-
 def retrieve_documents(
     question: str,
     user_id: int,
     document_id: int,
-    k: int = 3,
+    k: int = 5,
 ):
     """
     Retrieve only chunks belonging to the
@@ -50,16 +46,21 @@ def retrieve_documents(
 
     return results
 
-
 def build_context(documents):
-    """
-    Combine retrieved document chunks into a
-    single context string for the LLM.
-    """
-
     context_parts = []
+    seen_content = set()
 
     for document in documents:
+        content = document.page_content.strip()
+
+        if not content:
+            continue
+
+        if content in seen_content:
+            continue
+
+        seen_content.add(content)
+
         source = document.metadata.get(
             "source",
             "Unknown",
@@ -73,38 +74,36 @@ def build_context(documents):
         context_parts.append(
             f"Source: {source}\n"
             f"Page: {page}\n"
-            f"Content:\n{document.page_content}"
+            f"Content:\n{content}"
         )
 
     return "\n\n---\n\n".join(context_parts)
-
 
 def generate_answer(
     question: str,
     user_id: int,
     document_id: int,
 ):
-    """
-    Complete document-specific RAG pipeline:
+    total_start = time.perf_counter()
 
-    Question
-        ↓
-    User + Document-specific Retrieval
-        ↓
-    Context construction
-        ↓
-    Prompt
-        ↓
-    Gemini answer
-        ↓
-    Structured response
-    """
+    retrieval_start = time.perf_counter()
 
     documents = retrieve_documents(
         question,
         user_id,
         document_id,
     )
+
+    retrieval_time = time.perf_counter() - retrieval_start
+    if not documents:
+        return {
+            "answer": (
+            "The answer is not available in the "
+            "provided study material."
+            ),
+            "sources": [],
+        }
+    context_start = time.perf_counter()
 
     context = build_context(documents)
 
@@ -113,9 +112,14 @@ def generate_answer(
         question=question,
     )
 
-    llm = get_llm()
+    context_time = time.perf_counter() - context_start
 
+    llm_start = time.perf_counter()
+
+    llm = get_llm()
     response = llm.invoke(prompt)
+
+    llm_time = time.perf_counter() - llm_start
 
     answer = response.content
 
@@ -139,14 +143,36 @@ def generate_answer(
             "Unknown",
         )
 
-        sources.append(
-            {
-                "source": source,
-                "page": page,
-            }
-        )
+        sources.append({
+            "source": source,
+            "page": page,
+        })
+
+    total_time = time.perf_counter() - total_start
+
+    print("\n--- EduRAG Performance ---")
+    print(f"Retrieval: {retrieval_time:.2f}s")
+    print(f"Context:   {context_time:.2f}s")
+    print(f"Gemini:    {llm_time:.2f}s")
+    print(f"Total:     {total_time:.2f}s")
+    print("--------------------------\n")
 
     return {
         "answer": answer,
         "sources": sources,
     }
+
+def delete_document_vectors(
+    user_id: int,
+    document_id: int,
+):
+    vector_store = get_vector_store()
+
+    vector_store.delete(
+        where={
+            "$and": [
+                {"user_id": user_id},
+                {"document_id": document_id},
+            ]
+        }
+    )
