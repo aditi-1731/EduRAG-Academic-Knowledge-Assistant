@@ -15,7 +15,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 function Home() {
-  const [result, setResult] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [documentId, setDocumentId] = useState(null);
   const [documentsRefresh, setDocumentsRefresh] = useState(0);
 
@@ -38,22 +38,90 @@ function Home() {
           </p>
         </section>
 
-        <DocumentList refreshTrigger={documentsRefresh}/>
+        <DocumentList
+          refreshTrigger={documentsRefresh}
+        />
 
         <div className="main-panel">
-          <DocumentUpload onUploadSuccess={(newDocumentId) => {
-            setDocumentId(newDocumentId);
-            setDocumentsRefresh(
-            (previous) => previous + 1
-          );}}/>
+          <div className="chat-toolbar">
+            <button
+              type="button"
+              className="new-chat-button"
+              onClick={() => setMessages([])}
+            >
+              + New Chat
+            </button>
+          </div>
+
+          <DocumentUpload
+            onUploadSuccess={(newDocumentId) => {
+              setMessages([]);
+              setDocumentId(newDocumentId);
+              setDocumentsRefresh(
+                (previous) => previous + 1
+              );
+            }}
+          />
 
           <QuestionBox
-            onResult={setResult}
+            onResult={(newMessage) => {
+              setMessages((previousMessages) => [
+                ...previousMessages,
+                newMessage,
+              ]);
+            }}
             documentId={documentId}
           />
 
-          <AnswerCard result={result} />
-          <Sources result={result} />
+          <div className="chat-container">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`chat-message ${
+                  message.role === "user"
+                    ? "chat-message-user"
+                    : "chat-message-assistant"
+                }`}
+              >
+                {message.role === "user" ? (
+                  <>
+                    <div className="chat-message-label">
+                      You
+                    </div>
+
+                    <div className="chat-user-message">
+                      {message.content}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="chat-message-label">
+                      EduRAG
+                    </div>
+
+                    <div className="chat-assistant-message">
+                      {message.result?.loading ? (
+                        <div className="thinking-message">
+                          EduRAG is thinking...
+                        </div>
+                      ) : (
+                        <>
+                          <AnswerCard
+                            result={message.result}
+                          />
+
+                          <Sources
+                            result={message.result}
+                          />
+                      </>
+                      )}
+                    </div>
+
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </main>
 

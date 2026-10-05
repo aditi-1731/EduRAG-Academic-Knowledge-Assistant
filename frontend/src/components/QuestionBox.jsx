@@ -13,27 +13,44 @@ function QuestionBox({ onResult, documentId }) {
 
     if (!documentId) {
       onResult({
-        error: "Please select a study material first.",
+        role: "assistant",
+        result: {
+          error: "Please upload a study material first.",
+        },
       });
       return;
     }
 
+    const currentQuestion = question.trim();
+
+    // Add the user's question to the conversation.
+    onResult({
+      role: "user",
+      content: currentQuestion,
+    });
+
+    // Show a temporary thinking message.
+    onResult({
+      role: "assistant",
+      result: {
+        loading: true,
+      },
+    });
+
     setLoading(true);
-    onResult(null);
+    setQuestion("");
 
     try {
       const response = await fetch(
         "http://127.0.0.1:8000/ask",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-
           body: JSON.stringify({
-            question: question.trim(),
+            question: currentQuestion,
             document_id: documentId,
           }),
         }
@@ -43,19 +60,28 @@ function QuestionBox({ onResult, documentId }) {
 
       if (!response.ok) {
         onResult({
-          error:
-            data.detail ||
-            "Something went wrong.",
+          role: "assistant",
+          result: {
+            error:
+              data.detail ||
+              "Something went wrong.",
+          },
         });
-
         return;
       }
 
-      onResult(data);
+      // Add EduRAG's actual response.
+      onResult({
+        role: "assistant",
+        result: data,
+      });
     } catch {
       onResult({
-        error:
-          "Unable to connect to the EduRAG server.",
+        role: "assistant",
+        result: {
+          error:
+            "Unable to connect to the EduRAG server.",
+        },
       });
     } finally {
       setLoading(false);
@@ -68,7 +94,8 @@ function QuestionBox({ onResult, documentId }) {
         <h2>Ask a Question</h2>
 
         <p>
-          Ask questions related to the study material you uploaded.
+          Ask questions related to the study material
+          you uploaded.
         </p>
       </div>
 
