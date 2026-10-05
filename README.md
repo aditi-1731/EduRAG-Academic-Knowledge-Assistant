@@ -6,11 +6,13 @@
 
 EduRAG is an AI-based academic assistant designed to help students understand and explore their study materials more efficiently.
 
-Users can upload academic PDFs such as lecture notes, textbooks, unit-wise notes, and study materials. The system processes the documents, divides their content into meaningful chunks, converts the chunks into vector embeddings, and stores them in a vector database.
+Users can create an account, upload academic PDF documents such as lecture notes, textbooks, unit-wise notes, and study materials, and ask questions about the uploaded content.
 
-When a student asks a question, EduRAG retrieves the most relevant information from the uploaded documents and provides it as context to a Large Language Model (LLM). Google Gemini then generates an answer grounded in the retrieved academic material.
+The system extracts text from PDFs, divides the content into meaningful chunks, generates vector embeddings using Google Gemini, and stores the embeddings in ChromaDB.
 
-The goal is to provide answers based on the user's study material rather than relying only on the model's general knowledge.
+When a student asks a question, EduRAG retrieves the most relevant content from the selected study material and provides that context to Google Gemini. The generated answer is grounded in the retrieved academic material and includes source information such as the document name and page number.
+
+The system also provides user authentication, document management, document search, document deletion, conversation history, and a clean web-based interface.
 
 ---
 
@@ -31,20 +33,20 @@ EduRAG aims to simplify this process by allowing students to ask questions direc
 
 ## 💡 Proposed Solution
 
-EduRAG uses a Retrieval-Augmented Generation pipeline:
+EduRAG uses a Retrieval-Augmented Generation pipeline to connect a student's study material with an AI question-answering system.
 
 ```text
-Academic PDFs
+Academic PDF
      ↓
 Text Extraction
      ↓
 Text Chunking
      ↓
-Embeddings
+Gemini Embeddings
      ↓
-Vector Database
+ChromaDB Vector Store
      ↓
-Question
+Student Question
      ↓
 Similarity Search
      ↓
@@ -52,79 +54,133 @@ Relevant Context
      ↓
 Google Gemini
      ↓
-Grounded Answer
+Grounded Answer + Sources
 ```
+---
+
 ## ✨ Features
-### Current / Planned Features
-- 📄 Upload academic PDF documents
-- 🔎 Semantic search over study materials
-- 🤖 AI-powered question answering
-- 📚 Retrieval-Augmented Generation (RAG)
--🧠 Gemini-powered embeddings and answer generation
-- 🗂️ Vector-based document storage
-- 📌 Source-aware answers
-- 📖 Subject and unit-based document organization
-- 💬 Interactive academic Q&A interface
-- 🌐 Modern web-based frontend
-- ⚡ FastAPI backend
-- 🔐 Secure API key management using environment variables
+
+### 🔐 Authentication
+- User registration
+- User login
+- JWT-based authentication
+- Protected application routes
+- Password hashing using Argon2
+- User-specific document access and retrieval
+- User isolation between accounts
+
+### 📄 Document Management
+- Upload academic PDF documents
+- Automatic PDF text extraction
+- Automatic text chunking
+- Gemini-powered embeddings
+- ChromaDB vector storage
+- Personal study-material library
+- Search uploaded documents
+- Delete documents
+- Document ownership and isolation
+  
+### 🤖 Academic Question Answering
+- Ask questions about uploaded study material
+- Retrieval-Augmented Generation (RAG)
+- Semantic similarity search
+- Context-grounded answers
+- Source-aware responses
+- Page-level source references
+- Protection against unsupported answers when information is unavailable
+
+### 💬 Chat Experience
+- Multiple questions in one conversation
+- Conversation history during the current session
+- New Chat functionality
+- Thinking/loading state
+- Automatic new conversation when a new document is uploaded
+- Clear error handling
+
+### User Interface
+- React-based web application
+- Responsive academic dashboard
+- Collapsible study-material sidebar
+- Document search
+- Clean question-and-answer interface
+- Login and registration pages
+
+---
 
 ## 🏗️ System Architecture
-                    ┌──────────────────────┐
-                    │       Student        │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    React Frontend    │
-                    │                      │
-                    │ Upload PDFs           │
-                    │ Ask Questions         │
-                    │ View Answers          │
-                    └──────────┬───────────┘
-                               │
-                              REST
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │      FastAPI         │
-                    │       Backend        │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │     RAG Pipeline     │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────┴──────────┐
-                    │                     │
-                    ▼                     ▼
-             ┌──────────────┐      ┌──────────────┐
-             │   ChromaDB   │      │    Gemini    │
-             │ Vector Store │      │     LLM      │
-             └──────────────┘      └──────────────┘
---- 
+```
+                         ┌──────────────────────┐
+                         │       Student        │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │   React Frontend     │
+                         │                      │
+                         │  Login / Register    │
+                         │  Upload PDF          │
+                         │  Study Materials     │
+                         │  Ask Questions       │
+                         │  View Answers        │
+                         └──────────┬───────────┘
+                                    │
+                                  REST API
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │      FastAPI         │
+                         │      Backend         │
+                         │                      │
+                         │  Authentication     │
+                         │  Document APIs      │
+                         │  Question API       │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │    RAG Pipeline      │
+                         │                      │
+                         │ Retrieval            │
+                         │ Context Construction │
+                         │ Prompt Generation    │
+                         └───────┬───────┬──────┘
+                                 │       │
+                    ┌────────────┘       └────────────┐
+                    ▼                                 ▼
+          ┌──────────────────┐              ┌──────────────────┐
+          │     ChromaDB     │              │   Google Gemini  │
+          │                  │              │                  │
+          │ Vector Retrieval │              │ Embeddings + LLM │
+          └──────────────────┘              └──────────────────┘
+
+                         ┌──────────────────────┐
+                         │     PostgreSQL       │
+                         │                      │
+                         │ Users                │
+                         │ Documents            │
+                         └──────────────────────┘
+```
+---
 
 ## 🔄 RAG Workflow
 ### 1. Document Ingestion
 ```
 PDF
  ↓
-Text Extraction
+PyMuPDF Text Extraction
  ↓
-Text Cleaning
+Recursive Text Chunking
  ↓
-Chunking
- ↓
-Embedding Generation
+Gemini Embedding Generation
  ↓
 ChromaDB
 ```
+---
 ### 2. Question Answering
 ```
 Student Question
  ↓
-Question Embedding
+Authenticated User + Document
  ↓
 Similarity Search
  ↓
@@ -132,28 +188,60 @@ Top Relevant Chunks
  ↓
 Context Construction
  ↓
-Gemini LLM
+Academic RAG Prompt
  ↓
-Final Answer
+Google Gemini
+ ↓
+Answer + Source Information
 ```
-## 🛠️ Technology Stack
-### Backend
-- Python
-- FastAPI
-- LangChain
-- PyMuPDF
+---
 
-### AI
+## 🛡️ Answer Grounding
+
+EduRAG is designed to reduce hallucination by using a strict academic RAG prompt.
+
+The system instructs Gemini to:
+
+- Use the provided academic context as the primary source.
+- Avoid inventing unsupported information.
+- Answer only using information supported by the retrieved material.
+- Clearly state when the answer is unavailable in the study material.
+- Address multiple parts of a question when the material supports them.
+- Preserve important technical terminology.
+- Provide clear and student-friendly explanations.
+---
+
+## 🧰 Technology Stack
+### Backend
+- Python 3.13
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- PyMuPDF
+- LangChain
+- python-multipart
+
+### AI and RAG
 - Google Gemini
 - Gemini Embeddings
 - Retrieval-Augmented Generation (RAG)
-- Vector Database
 - ChromaDB
+- LangChain Chroma integration
+- LangChain Google GenAI integration
+
+### Authentication and Security
+- JWT
+- PyJWT
+- Argon2 password hashing
+- Environment-based secrets
+- User-specific authorization checks
 
 ### Frontend
 - React
 - Vite
+- JavaScript
 - CSS
+- React Router
 
 ### Development Tools
 - Git
@@ -161,154 +249,171 @@ Final Answer
 - VS Code
 - Python Virtual Environment
 
-## Project Structure
+---
+
+## 📁 Project Structure
 ```
-EduRAG/
-│
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── rag/
-│   │   ├── services/
-│   │   ├── config.py
-│   │   └── main.py
+backend/
+├── app/
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   └── document.py
 │   │
-│   ├── data/
-│   │   ├── documents/
-│   │   └── processed/
+│   ├── rag/
+│   │   ├── __init__.py
+│   │   ├── pipeline.py
+│   │   └── prompts.py
 │   │
-│   ├── vectorstore/
-│   ├── tests/
-│   ├── .env
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── App.jsx
-│   │   └── main.jsx
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── document_service.py
+│   │   ├── embeddings.py
+│   │   ├── llm.py
+│   │   ├── pdf_loader.py
+│   │   ├── security.py
+│   │   ├── text_splitter.py
+│   │   └── vector_store.py
 │   │
-│   ├── public/
-│   └── package.json
-│
-├── .gitignore
-└── README.md
+│   ├── __init__.py
+│   ├── database.py
+│   └── main.py
 ```
 ---
-## 🚀 Project Development Roadmap
+## 🚀 Development Roadmap
+
 ### Phase 1 — Project Setup
- - Initialize repository
- - Configure Python environment
- - Configure Gemini API
- - Configure backend structure
- - Configure React frontend
+
+- Initialize repository
+- Configure Python environment
+- Configure Gemini API
+- Configure FastAPI backend
+- Configure React frontend
 
 ### Phase 2 — Document Processing
- - PDF upload
- - PDF text extraction
- - Text cleaning
- - Document chunking
- - Metadata extraction
+- PDF text extraction
+- Text chunking
+- Document metadata
+- Gemini embedding generation
+- ChromaDB vector storage
 
-### Phase 3 — RAG
- - Generate embeddings
- - Store embeddings in ChromaDB
- - Implement similarity search
- - Build retriever
- - Connect Gemini LLM
- - Generate grounded answers
+### Phase 3 — RAG Pipeline
+- Similarity search
+- Context construction
+- Academic RAG prompt
+- Gemini answer generation
+- Source metadata
+- Grounded response handling
 
 ### Phase 4 — Web Application
- - Build document upload interface
- - Build academic Q&A interface
- - Add document library
- - Add source references
- - Add loading and error states
- - Connect React frontend with FastAPI
+- React frontend
+- PDF upload interface
+- Academic Q&A interface
+- FastAPI REST APIs
+- Source display
+- Loading and error states
 
-### Phase 5 — Improvements
- - Subject filtering
- - Unit filtering
- - Answer modes
- - Conversation history
- - Improved retrieval
- - RAG evaluation
- - Hallucination reduction
- - Performance optimization
+### Phase 5 — Authentication and User Data
+- User registration
+- JWT login
+- Protected routes
+- PostgreSQL integration
+- User-specific documents
+- Document ownership checks
 
-## 🔐 Environment Variables
+### Phase 6 — Document Management
+- Personal study-material library
+- Document search
+- Document deletion
+- Active document workflow
+- User/document-specific retrieval
 
-Create a .env file inside the backend directory:
-```
-GEMINI_API_KEY=your_api_key_here
-```
+### Phase 7 — Chat Experience
+- Conversation history
+- New Chat
+- Thinking/loading state
+- New-document conversation reset
+- Improved academic Q&A experience
+
+### Phase 8 — Testing and Security
+- End-to-end system testing
+- Authentication testing
+- User-isolation testing
+- Document ownership testing
+- Security cleanup
+- Repository cleanup
 ---
 
-## 🧪 Example
-### Input
-```
-Explain Second Normal Form with an example.
-```
-### Retrieval
+## 📊 Current Project Status
 
-The system searches the uploaded academic documents and retrieves the most relevant chunks related to:
-
-- Normalization
-- First Normal Form
-- Second Normal Form
-- Partial dependency
-
-### Generated Answer
-
-Gemini receives:
+EduRAG currently provides a complete working academic RAG workflow:
 ```
-Question
-+
-Retrieved academic context
+Register / Login
+       ↓
+Upload Study PDF
+       ↓
+Process and Embed Document
+       ↓
+Store in ChromaDB
+       ↓
+Ask Academic Question
+       ↓
+Retrieve Relevant Content
+       ↓
+Generate Grounded Answer
+       ↓
+Display Sources
 ```
-and generates an answer based on the retrieved study material.
+The application has been tested for:
+
+- Authentication
+- Protected routes
+- PDF upload
+- Document processing
+- Question answering
+- Multiple questions
+- Chat history
+- New Chat
+- New-document workflow
+- Document search
+- Document deletion
+- User isolation
+- Backend startup
+- Frontend startup
+- Repository and secret safety
 ---
-## 🎓 Academic Use Case
 
-EduRAG can be used with:
-
-- University lecture notes
-- Course textbooks
-- Unit-wise study materials
-- Class notes
-- Technical documentation
-- Exam preparation material
----
 ## ⚠️ Limitations
 
-The quality of the generated answer depends on:
+The quality of generated answers depends on:
 
 - Quality of uploaded documents
-- PDF text extraction
+- PDF text extraction quality
 - Chunking strategy
 - Embedding quality
 - Retrieval accuracy
-- LLM response quality
-
-The system should indicate when sufficient information cannot be found in the uploaded material instead of presenting unsupported information as fact.
+- Gemini model availability and quota
+- Quality and completeness of the academic material
+---
 
 ## 🔮 Future Scope
 
 Potential future improvements include:
 
 - Multi-document conversations
-- User accounts
 - Persistent chat history
 - Exam-oriented answer generation
 - Automatic question generation
 - Quiz generation
 - Flashcard generation
 - Multilingual academic assistance
-- Citation-aware answers
-- RAG evaluation dashboards
-- Support for additional document formats
+- Additional document formats
+- Advanced RAG evaluation
+- Retrieval quality evaluation
+- Improved citation handling
+- Production deployment
+- Performance optimization
+---
 
 ## 👩‍💻 Author
 
