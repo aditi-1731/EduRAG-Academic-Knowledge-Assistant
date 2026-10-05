@@ -5,8 +5,7 @@ password = "TestPassword123!"
 
 hashed = hash_password(password)
 
-print("Original password:", password)
-print("Hashed password:", hashed)
+print("Password hashing successful!")
 
 print(
     "Correct password:",
