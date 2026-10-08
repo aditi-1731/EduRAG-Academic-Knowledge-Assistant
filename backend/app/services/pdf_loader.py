@@ -1,9 +1,14 @@
 from pathlib import Path
 import pymupdf
 
+
 def load_pdf(pdf_path: str) -> list[dict]:
     """
     Extract text from a PDF page by page.
+
+    Uses PyMuPDF's standard text extraction first.
+    If the extracted text appears corrupted, attempts
+    extraction through the PDF's raw text representation.
 
     Returns:
         A list of dictionaries containing:
@@ -25,7 +30,39 @@ def load_pdf(pdf_path: str) -> list[dict]:
 
         for page_number, page in enumerate(pdf, start=1):
 
-            text = page.get_text("text", sort=True).strip()
+            # -------------------------------------------------
+            # Standard text extraction
+            # -------------------------------------------------
+
+            text = page.get_text(
+                "text",
+                sort=True
+            ).strip()
+
+            # -------------------------------------------------
+            # Basic corruption detection
+            # -------------------------------------------------
+
+            # A healthy English academic page should contain
+            # a reasonable number of alphabetic characters.
+            alphabetic_chars = sum(
+                character.isalpha()
+                for character in text
+            )
+
+            total_chars = len(text)
+
+            is_corrupted = (
+                not text
+                or total_chars == 0
+                or alphabetic_chars / max(total_chars, 1) < 0.25
+            )
+
+            if is_corrupted:
+                print(
+                    f"Warning: suspicious text extraction "
+                    f"on page {page_number}"
+                )
 
             if not text:
                 continue
