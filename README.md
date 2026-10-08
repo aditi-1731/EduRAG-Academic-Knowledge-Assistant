@@ -253,32 +253,111 @@ The system instructs Gemini to:
 
 ## 📁 Project Structure
 ```
-backend/
-├── app/
-│   ├── models/
+EduRAG/
+│
+├── backend/
+│   ├── app/
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py
+│   │   │   └── document.py
+│   │   │
+│   │   ├── rag/
+│   │   │   ├── __init__.py
+│   │   │   ├── pipeline.py
+│   │   │   └── prompts.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_service.py
+│   │   │   ├── embeddings.py
+│   │   │   ├── llm.py
+│   │   │   ├── pdf_loader.py
+│   │   │   ├── security.py
+│   │   │   ├── text_splitter.py
+│   │   │   └── vector_store.py
+│   │   │
 │   │   ├── __init__.py
-│   │   ├── user.py
-│   │   └── document.py
+│   │   ├── database.py
+│   │   └── main.py
 │   │
-│   ├── rag/
-│   │   ├── __init__.py
-│   │   ├── pipeline.py
-│   │   └── prompts.py
+│   ├── data/
+│   │   └── documents/
 │   │
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── document_service.py
-│   │   ├── embeddings.py
-│   │   ├── llm.py
-│   │   ├── pdf_loader.py
-│   │   ├── security.py
-│   │   ├── text_splitter.py
-│   │   └── vector_store.py
+│   ├── tests/
 │   │
-│   ├── __init__.py
-│   ├── database.py
-│   └── main.py
+│   └── vectorstore/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   └── main.jsx
+│   │
+│   ├── package.json
+│   └── vite.config.js
+│
+├── .env
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
+---
+## ⚙️ Environment Variables
+
+Create a .env file in the project root.
+```
+GEMINI_API_KEY=your_gemini_api_key
+DATABASE_URL=your_postgresql_connection_string
+JWT_SECRET_KEY=your_jwt_secret
+```
+
+### 🚀 Local Setup
+1. Clone the repository
+```
+git clone https://github.com/aditi-1731/EduRAG-Academic-Knowledge-Assistant.git
+
+cd EduRAG-Academic-Knowledge-Assistant
+```
+
+2. Create and activate a virtual environment
+Windows PowerShell
+```
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+3. Install backend dependencies
+
+```
+pip install -r requirements.txt
+```
+4. Configure environment variables
+
+Create the .env file in the project root and add:
+```
+GEMINI_API_KEY=your_gemini_api_key
+DATABASE_URL=your_postgresql_connection_string
+JWT_SECRET_KEY=your_jwt_secret
+```
+5. Start the FastAPI backend
+
+From the project root:
+```
+uvicorn backend.app.main:app --reload
+```
+6. Start the React frontend
+
+Open another terminal:
+```
+cd frontend
+npm install
+npm run dev
+```
+The frontend will be available through the Vite development server.
+
 ---
 ## 🚀 Development Roadmap
 
@@ -411,7 +490,7 @@ Potential future improvements include:
 - Advanced RAG evaluation
 - Retrieval quality evaluation
 - Improved citation handling
-- Production deployment
+- Advanced deployment and infrastructure optimization
 - Performance optimization
 ---
 
