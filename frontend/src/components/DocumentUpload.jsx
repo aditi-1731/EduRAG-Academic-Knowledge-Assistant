@@ -1,27 +1,32 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useAuth } from "../context/useAuth";
 
-function DocumentUpload({onUploadSuccess}) {
+function DocumentUpload({ onUploadSuccess }) {
   const { token } = useAuth();
+
+  const fileInputRef = useRef(null);
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-
+  const selectFile = (selectedFile) => {
     setMessage("");
     setError("");
 
     if (!selectedFile) {
-      setFile(null);
       return;
     }
 
-    if (selectedFile.type !== "application/pdf") {
+    if (
+      selectedFile.type !== "application/pdf" &&
+      !selectedFile.name
+        .toLowerCase()
+        .endsWith(".pdf")
+    ) {
       setFile(null);
       setError("Please select a PDF file.");
       return;
@@ -30,9 +35,39 @@ function DocumentUpload({onUploadSuccess}) {
     setFile(selectedFile);
   };
 
+  const handleFileChange = (event) => {
+    const selectedFile =
+      event.target.files[0];
+
+    selectFile(selectedFile);
+
+    event.target.value = "";
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+
+    setIsDragging(false);
+
+    if (loading) return;
+
+    const droppedFile =
+      event.dataTransfer.files[0];
+
+    selectFile(droppedFile);
+  };
+
+  const openFilePicker = () => {
+    if (!loading) {
+      fileInputRef.current?.click();
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a PDF file first.");
+      setError(
+        "Please select a PDF file first."
+      );
       return;
     }
 
@@ -65,13 +100,15 @@ function DocumentUpload({onUploadSuccess}) {
       }
 
       setMessage(
-        `${data.filename} uploaded successfully.`
+        `${data.filename} is ready to study.`
       );
 
       setFile(null);
 
       if (onUploadSuccess) {
-        onUploadSuccess(data.document_id);
+        onUploadSuccess(
+          data.document_id
+        );
       }
     } catch (error) {
       setError(
@@ -85,50 +122,167 @@ function DocumentUpload({onUploadSuccess}) {
 
   return (
     <section className="upload-section">
-      <div className="upload-heading">
-        <div>
-          <h2>Upload Study Material</h2>
+      <div className="upload-card-header">
+        <div className="upload-card-title-group">
+          <div className="upload-main-icon">
+            <span>+</span>
+          </div>
 
-          <p>
-            Upload a PDF to study from it with EduRAG.
-          </p>
+          <div>
+            <span className="upload-eyebrow">
+              STUDY MATERIAL
+            </span>
+
+            <h2>
+              Upload your study material
+            </h2>
+
+            <p>
+              Add a PDF and turn it into
+              an interactive study workspace.
+            </p>
+          </div>
+        </div>
+
+        <div className="upload-file-badge">
+          <strong>PDF</strong>
+          <small>
+            Academic material
+          </small>
         </div>
       </div>
 
-      <div className="upload-controls">
-        <input
-          type="file"
-          accept=".pdf,application/pdf"
-          onChange={handleFileChange}
-          disabled={loading}
-        />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        onChange={handleFileChange}
+        disabled={loading}
+        className="upload-hidden-input"
+      />
 
-        {file && (
-          <p className="selected-file">
-            Selected: {file.name}
-          </p>
-        )}
+      <div
+        className={`upload-dropzone ${
+          isDragging
+            ? "upload-dropzone-active"
+            : ""
+        } ${
+          file
+            ? "upload-dropzone-selected"
+            : ""
+        }`}
+        onClick={openFilePicker}
+        onDragOver={(event) => {
+          event.preventDefault();
+
+          if (!loading) {
+            setIsDragging(true);
+          }
+        }}
+        onDragLeave={() =>
+          setIsDragging(false)
+        }
+        onDrop={handleDrop}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (
+            event.key === "Enter" ||
+            event.key === " "
+          ) {
+            event.preventDefault();
+            openFilePicker();
+          }
+        }}
+      >
+        <div className="upload-drop-icon">
+          <span>
+            {file ? "✓" : "PDF"}
+          </span>
+        </div>
+
+        <div className="upload-drop-content">
+          {file ? (
+            <>
+              <strong className="upload-file-name">
+                {file.name}
+              </strong>
+
+              <span>
+                PDF selected · Click to
+                choose another
+              </span>
+            </>
+          ) : (
+            <>
+              <strong>
+                Drop your PDF here
+              </strong>
+
+              <span>
+                or{" "}
+                <button
+                  type="button"
+                  className="upload-browse-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openFilePicker();
+                  }}
+                >
+                  browse from your computer
+                </button>
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="upload-card-footer">
+        <div className="upload-privacy">
+          <span className="upload-check-icon">
+            ✓
+          </span>
+
+          <span>
+            Your material stays private
+            to your account.
+          </span>
+        </div>
 
         <button
           type="button"
           className="upload-button"
           onClick={handleUpload}
-          disabled={loading || !file}
+          disabled={
+            loading || !file
+          }
         >
-          {loading
-            ? "Processing PDF..."
-            : "Upload PDF"}
+          {loading ? (
+            <>
+              <span className="upload-spinner" />
+              Processing PDF...
+            </>
+          ) : (
+            <>
+              Upload &amp; Study
+              <span className="upload-button-arrow">
+                →
+              </span>
+            </>
+          )}
         </button>
       </div>
 
       {message && (
         <div className="upload-success">
+          <span>✓</span>
           {message}
         </div>
       )}
 
       {error && (
         <div className="upload-error">
+          <span>!</span>
           {error}
         </div>
       )}
