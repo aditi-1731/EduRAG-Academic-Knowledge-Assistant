@@ -1,3 +1,4 @@
+const API_URL = import.meta.env.VITE_API_URL;
 import {
   useCallback,
   useEffect,
@@ -26,7 +27,7 @@ export function AuthProvider({ children }) {
       try {
 
         const response = await fetch(
-          "http://127.0.0.1:8000/me",
+          `${API_URL}/me`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -78,7 +79,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
 
     const response = await fetch(
-      "http://127.0.0.1:8000/login",
+      `${API_URL}/login`,
       {
         method: "POST",
 

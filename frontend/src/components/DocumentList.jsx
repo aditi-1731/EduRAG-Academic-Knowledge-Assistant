@@ -1,3 +1,4 @@
+const API_URL = import.meta.env.VITE_API_URL;
 import { useEffect, useState } from "react";
 
 import { useAuth } from "../context/useAuth";
@@ -18,7 +19,7 @@ function DocumentList({ refreshTrigger }) {
     const loadDocuments = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/documents",
+          `${API_URL}/documents`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -76,7 +77,7 @@ function DocumentList({ refreshTrigger }) {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/documents/${documentId}`,
+        `${API_URL}/documents/${documentId}`,
         {
           method: "DELETE",
           headers: {

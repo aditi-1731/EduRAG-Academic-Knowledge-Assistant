@@ -1,3 +1,4 @@
+const API_URL = import.meta.env.VITE_API_URL;
 import { useState } from "react";
 
 import { useAuth } from "../context/useAuth";
@@ -40,7 +41,7 @@ function QuestionBox({ onResult, documentId }) {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/ask",
+        `${API_URL}/ask`,
         {
           method: "POST",
           headers: {
