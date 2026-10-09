@@ -3,7 +3,7 @@
 > An AI-powered academic question-answering system that uses Retrieval-Augmented Generation (RAG) to answer questions from student-provided study materials.
 
 ## 🌐 Live Demo
-- **Frontend:** https://<your-stable-vercel-domain>.vercel.app
+- **Frontend:** https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app
 - **Backend API docs:** https://edurag-backend-qx7v.onrender.com/docs
 
 > The backend runs on Render's free tier, so the first request after inactivity can take 30–60 seconds while it wakes up.
