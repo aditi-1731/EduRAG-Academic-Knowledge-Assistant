@@ -59,7 +59,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app/",
+        "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
