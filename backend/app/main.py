@@ -1,46 +1,43 @@
-from fastapi import Depends, FastAPI, HTTPException
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.rag.pipeline import (
-    generate_answer,
-    delete_document_vectors,
-)
-
-from app.schemas.question import QuestionRequest
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models.user import User
-from app.models.document import Document
+from app.database import Base, engine, get_db
 
+# Models must be imported BEFORE create_all so that SQLAlchemy
+# knows about the tables it has to create.
+from app.models.document import Document
+from app.models.user import User
+
+from app.rag.pipeline import (
+    delete_document_vectors,
+    generate_answer,
+)
+from app.schemas.document import (
+    DocumentResponse,
+    DocumentUploadResponse,
+)
+from app.schemas.question import QuestionRequest
 from app.schemas.user import (
+    TokenResponse,
     UserLogin,
     UserRegister,
     UserResponse,
-    TokenResponse,
 )
-
+from app.services.auth import get_current_user
+from app.services.document_service import process_uploaded_pdf
 from app.services.security import (
     create_access_token,
     hash_password,
     verify_password,
 )
 
-from app.services.auth import get_current_user
-
-from pathlib import Path
-from uuid import uuid4
-
-from fastapi import File, UploadFile
-
-from app.schemas.document import (
-    DocumentUploadResponse,
-    DocumentResponse,
-)
-
-from app.services.document_service import process_uploaded_pdf
+# Create any missing tables (users, documents) in PostgreSQL.
+Base.metadata.create_all(bind=engine)
 
 UPLOAD_DIR = Path("data/uploads")
 UPLOAD_DIR.mkdir(
@@ -54,11 +51,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-from app.database import engine, Base
-# Explicitly import models so SQLAlchemy registers their schema metadata
-from app.models.user import User
-from app.models.document import Document
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -66,10 +58,13 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app",
     ],
+    # Matches the production URL and every Vercel preview/deployment URL.
+    allow_origin_regex=r"https://edu-rag-academic-knowledge-assistant.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def root():
@@ -83,6 +78,7 @@ def health_check():
     return {
         "status": "healthy"
     }
+
 
 @app.post("/register", response_model=UserResponse)
 def register_user(
@@ -112,6 +108,7 @@ def register_user(
     db.refresh(new_user)
 
     return new_user
+
 
 @app.post("/login", response_model=TokenResponse)
 def login_user(
@@ -146,11 +143,13 @@ def login_user(
         "token_type": "bearer",
     }
 
+
 @app.get("/me", response_model=UserResponse)
 def get_me(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
+
 
 @app.post("/ask")
 def ask_question(
@@ -186,6 +185,7 @@ def ask_question(
             detail=f"Failed to generate answer: {error}",
         )
 
+
 @app.post(
     "/upload",
     response_model=DocumentUploadResponse,
@@ -207,10 +207,7 @@ async def upload_document(
             detail="A filename is required.",
         )
 
-    safe_filename = (
-        f"{uuid4()}_{file.filename}"
-    )
-
+    safe_filename = f"{uuid4()}_{file.filename}"
     file_path = UPLOAD_DIR / safe_filename
 
     try:
@@ -255,7 +252,7 @@ async def upload_document(
 
         return {
             "message": "PDF uploaded and processed successfully.",
-            "document_id":document.id,
+            "document_id": document.id,
             **result,
         }
 
@@ -275,6 +272,7 @@ async def upload_document(
         if file_path.exists():
             file_path.unlink()
 
+
 @app.get(
     "/documents",
     response_model=list[DocumentResponse],
@@ -292,6 +290,7 @@ def get_documents(
     ).all()
 
     return documents
+
 
 @app.delete("/documents/{document_id}")
 def delete_document(
