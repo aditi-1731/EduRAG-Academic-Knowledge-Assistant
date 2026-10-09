@@ -54,6 +54,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
+from app.database import engine, Base
+# Explicitly import models so SQLAlchemy registers their schema metadata
+from app.models.user import User
+from app.models.document import Document
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
