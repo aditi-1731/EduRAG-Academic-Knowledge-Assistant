@@ -57,8 +57,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app",
-        "https://edurag-backend-qx7v.onrender.com/",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
