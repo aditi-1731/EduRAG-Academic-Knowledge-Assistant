@@ -97,7 +97,7 @@ Grounded Answer + Sources
 - Automatic new conversation when a new document is uploaded
 - Clear error handling
 
-### User Interface
+### 🖥️ User Interface
 - React-based web application
 - Responsive academic dashboard
 - Collapsible study-material sidebar
@@ -131,9 +131,9 @@ Grounded Answer + Sources
                          │      FastAPI         │
                          │      Backend         │
                          │                      │
-                         │  Authentication     │
-                         │  Document APIs      │
-                         │  Question API       │
+                         │  Authentication      │
+                         │  Document APIs       │
+                         │  Question API        │
                          └──────────┬───────────┘
                                     │
                                     ▼
@@ -315,25 +315,27 @@ JWT_SECRET_KEY=your_jwt_secret
 ```
 
 ### 🚀 Local Setup
+---
 1. Clone the repository
 ```
 git clone https://github.com/aditi-1731/EduRAG-Academic-Knowledge-Assistant.git
 
 cd EduRAG-Academic-Knowledge-Assistant
 ```
-
+---
 2. Create and activate a virtual environment
 Windows PowerShell
 ```
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 ```
-
+---
 3. Install backend dependencies
 
 ```
 pip install -r requirements.txt
 ```
+---
 4. Configure environment variables
 
 Create the .env file in the project root and add:
@@ -342,12 +344,14 @@ GEMINI_API_KEY=your_gemini_api_key
 DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET_KEY=your_jwt_secret
 ```
+---
 5. Start the FastAPI backend
 
 From the project root:
 ```
 uvicorn backend.app.main:app --reload
 ```
+---
 6. Start the React frontend
 
 Open another terminal:
