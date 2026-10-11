@@ -56,7 +56,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://edu-rag-academic-knowledge-assistan.vercel.app",
         "https://edu-rag-academic-knowledge-assistant-6jt540s76.vercel.app",
+
     ],
     # Matches the production URL and every Vercel preview/deployment URL.
     allow_origin_regex=r"https://edu-rag-academic-knowledge-assistant.*\.vercel\.app",
