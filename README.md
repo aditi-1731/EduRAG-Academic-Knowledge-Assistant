@@ -5,8 +5,6 @@
 ## 🌐 Live Demo
 - **Frontend:** https://edu-rag-academic-knowledge-assistant-9amyy75c5.vercel.app
 - **Backend API docs:** https://edurag-backend-qx7v.onrender.com/docs
-
-> The backend runs on Render's free tier, so the first request after inactivity can take 30–60 seconds while it wakes up.
 ---
 ## 📌 Overview
 
@@ -16,7 +14,7 @@ Users can create an account, upload academic PDF documents such as lecture notes
 
 The system extracts text from PDFs, divides the content into meaningful chunks, generates vector embeddings using Google Gemini, and stores the embeddings in ChromaDB.
 
-When a student asks a question, EduRAG retrieves the most relevant content from the selected study material and provides that context to Google Gemini. The generated answer is grounded in the retrieved academic material and includes source information such as the document name and page number.
+The system extracts text from PDFs (with a Gemini vision OCR fallback for PDFs whose text layer is unreadable), divides the content into meaningful chunks, generates vector embeddings using Google Gemini, and stores them in PostgreSQL using pgvector.
 
 The system also provides user authentication, document management, document search, document deletion, conversation history, and a clean web-based interface.
 
@@ -44,13 +42,13 @@ EduRAG uses a Retrieval-Augmented Generation pipeline to connect a student's stu
 ```text
 Academic PDF
      ↓
-Text Extraction
+Text Extraction(OCR fallback for unreadable pages)
      ↓
 Text Chunking
      ↓
 Gemini Embeddings
      ↓
-ChromaDB Vector Store
+PgVector Store(PostgreSQL / Neon)
      ↓
 Student Question
      ↓
@@ -80,7 +78,8 @@ Grounded Answer + Sources
 - Automatic PDF text extraction
 - Automatic text chunking
 - Gemini-powered embeddings
-- ChromaDB vector storage
+- OCR fallback for PDFs with corrupted or image-based text
+- Persistent pgvector storage in PostgreSQL (Neon)
 - Personal study-material library
 - Search uploaded documents
 - Delete documents
@@ -93,6 +92,7 @@ Grounded Answer + Sources
 - Context-grounded answers
 - Source-aware responses
 - Page-level source references
+- MMR (Maximal Marginal Relevance) retrieval for more varied context
 - Protection against unsupported answers when information is unavailable
 
 ### 💬 Chat Experience
@@ -154,9 +154,9 @@ Grounded Answer + Sources
                     ┌────────────┘       └────────────┐
                     ▼                                 ▼
           ┌──────────────────┐              ┌──────────────────┐
-          │     ChromaDB     │              │   Google Gemini  │
-          │                  │              │                  │
-          │ Vector Retrieval │              │ Embeddings + LLM │
+          │PostgreSQL(Neon)  │              │   Google Gemini  │
+          │   Users          │              │                  │
+          │ Vectors          │              │ Embeddings + LLM │
           └──────────────────┘              └──────────────────┘
 
                          ┌──────────────────────┐
@@ -173,13 +173,13 @@ Grounded Answer + Sources
 ```
 PDF
  ↓
-PyMuPDF Text Extraction
+PyMuPDF Text Extraction(Gemini OCR fallback)
  ↓
 Recursive Text Chunking
  ↓
 Gemini Embedding Generation
  ↓
-ChromaDB
+PgVector
 ```
 ---
 ### 2. Question Answering
@@ -188,7 +188,7 @@ Student Question
  ↓
 Authenticated User + Document
  ↓
-Similarity Search
+MMR Similarity Search
  ↓
 Top Relevant Chunks
  ↓
@@ -222,7 +222,7 @@ The system instructs Gemini to:
 - Python 3.13
 - FastAPI
 - SQLAlchemy
-- PostgreSQL
+- PostgreSQL(Neon)
 - PyMuPDF
 - LangChain
 - python-multipart
@@ -230,10 +230,16 @@ The system instructs Gemini to:
 ### AI and RAG
 - Google Gemini
 - Gemini Embeddings
+- PgVector
+- LangChain-postgres
+- Gemini vision (OCR fallback)
 - Retrieval-Augmented Generation (RAG)
-- ChromaDB
-- LangChain Chroma integration
 - LangChain Google GenAI integration
+
+### Deployment
+- Render(backend)
+- Vercel(frontend)
+- Neon (PostgreSQL + pgvector)
 
 ### Authentication and Security
 - JWT
@@ -290,9 +296,8 @@ EduRAG/
 │   ├── data/
 │   │   └── documents/
 │   │
-│   ├── tests/
-│   │
-│   └── vectorstore/
+│   └── tests/
+│ 
 │
 ├── frontend/
 │   ├── src/
@@ -347,7 +352,7 @@ pip install -r requirements.txt
 Create the .env file in the project root and add:
 ```
 GEMINI_API_KEY=your_gemini_api_key
-DATABASE_URL=your_postgresql_connection_string
+DATABASE_URL=postgresql+psycopg://user:password@host/dbname?sslmode=require
 JWT_SECRET_KEY=your_jwt_secret
 ```
 ---
@@ -384,7 +389,7 @@ The frontend will be available through the Vite development server.
 - Text chunking
 - Document metadata
 - Gemini embedding generation
-- ChromaDB vector storage
+- PgVector storage
 
 ### Phase 3 — RAG Pipeline
 - Similarity search
@@ -431,6 +436,14 @@ The frontend will be available through the Vite development server.
 - Document ownership testing
 - Security cleanup
 - Repository cleanup
+
+### Phase 9 — Deployment and Optimization
+- Deployed backend on Render and frontend on Vercel
+- Migrated database from Render Postgres to Neon (free tier)
+- Moved vector storage from ChromaDB to pgvector for persistence
+- Improved retrieval with MMR search and query expansion
+- Added Gemini vision OCR fallback for unreadable PDFs
+- Parallel OCR for faster processing
 ---
 
 ## 📊 Current Project Status
@@ -443,7 +456,9 @@ Upload Study PDF
        ↓
 Process and Embed Document
        ↓
-Store in ChromaDB
+Store in PgVector
+       ↓
+OCR fallback for PDFs with unreadable text
        ↓
 Ask Academic Question
        ↓
@@ -502,6 +517,8 @@ Potential future improvements include:
 - Improved citation handling
 - Advanced deployment and infrastructure optimization
 - Performance optimization
+- Background processing for document uploads
+- Hybrid (keyword + semantic) search
 ---
 
 ## 👩‍💻 Author
