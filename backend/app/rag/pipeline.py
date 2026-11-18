@@ -1,14 +1,12 @@
 import time
-from functools import lru_cache
 
-from langchain_chroma import Chroma
-
-from app.services.embeddings import get_embeddings
 from app.services.llm import get_llm
+from app.services.vector_store import (
+    get_vector_store,
+    delete_vectors_for_document,
+)
 from app.rag.prompts import ACADEMIC_RAG_PROMPT
 
-
-VECTORSTORE_DIR = "vectorstore"
 
 # Keep retries limited so the user does not wait too long.
 MAX_LLM_RETRIES = 2
@@ -16,25 +14,30 @@ MAX_LLM_RETRIES = 2
 # Short delay between temporary retries.
 LLM_RETRY_DELAY = 2
 
+# Retrieval settings
+RETRIEVAL_K = 8          # chunks sent to Gemini
+RETRIEVAL_FETCH_K = 30   # candidates considered before MMR picks K
+SHORT_QUESTION_WORDS = 8  # questions shorter than this get expanded
 
-@lru_cache(maxsize=1)
-def get_vector_store():
-    embeddings = get_embeddings()
 
-    vector_store = Chroma(
-        collection_name="academic_documents",
-        embedding_function=embeddings,
-        persist_directory=VECTORSTORE_DIR,
-    )
+def expand_question(question: str) -> str:
+    """
+    Short questions like "What is operating system" match many chunks
+    almost equally. Adding intent words helps definition-style chunks
+    rank higher. Longer, more specific questions are left unchanged.
+    """
 
-    return vector_store
+    if len(question.split()) < SHORT_QUESTION_WORDS:
+        return f"{question}. Definition, meaning and explanation."
+
+    return question
 
 
 def retrieve_documents(
     question: str,
     user_id: int,
     document_id: int,
-    k: int = 5,
+    k: int = RETRIEVAL_K,
 ):
     """
     Retrieve the most relevant chunks belonging only to
@@ -43,36 +46,44 @@ def retrieve_documents(
 
     vector_store = get_vector_store()
 
-    results = vector_store.similarity_search(
-        question,
-        k=k,
-        filter={
-            "$and": [
-                {"user_id": user_id},
-                {"document_id": document_id},
-            ]
-        },
-    )
+    search_filter = {
+        "$and": [
+            {"user_id": {"$eq": user_id}},
+            {"document_id": {"$eq": document_id}},
+        ]
+    }
+
+    search_query = expand_question(question)
+
+    try:
+        # MMR returns varied chunks instead of near-duplicates.
+        results = vector_store.max_marginal_relevance_search(
+            search_query,
+            k=k,
+            fetch_k=RETRIEVAL_FETCH_K,
+            filter=search_filter,
+        )
+    except Exception as error:
+        print(f"MMR search failed ({error}). Falling back to similarity search.")
+
+        results = vector_store.similarity_search(
+            search_query,
+            k=k,
+            filter=search_filter,
+        )
 
     print("\n========== RETRIEVED DOCUMENTS ==========")
+    print(f"Search query: {search_query}")
 
     for index, document in enumerate(results, start=1):
-        source = document.metadata.get(
-            "source",
-            "Unknown",
-        )
-
-        page = document.metadata.get(
-            "page",
-            "Unknown",
-        )
-
+        source = document.metadata.get("source", "Unknown")
+        page = document.metadata.get("page", "Unknown")
         content = document.page_content.strip()
 
         print(f"\n--- Result {index} ---")
         print(f"Source: {source}")
         print(f"Page: {page}")
-        print(f"Content preview:")
+        print("Content preview:")
         print(content[:1000])
 
     print("\n=========================================\n")
@@ -99,15 +110,8 @@ def build_context(documents):
 
         seen_content.add(content)
 
-        source = document.metadata.get(
-            "source",
-            "Unknown",
-        )
-
-        page = document.metadata.get(
-            "page",
-            "Unknown",
-        )
+        source = document.metadata.get("source", "Unknown")
+        page = document.metadata.get("page", "Unknown")
 
         context_parts.append(
             f"Source: {source}\n"
@@ -173,9 +177,7 @@ def generate_llm_response(prompt: str):
         except Exception as error:
             last_error = error
 
-            print(
-                f"Gemini generation error: {error}"
-            )
+            print(f"Gemini generation error: {error}")
 
             if not is_temporary_gemini_error(error):
                 raise error
@@ -277,21 +279,22 @@ def generate_answer(
         )
 
     # ---------------------------------------------------------
-    # Sources
+    # Sources (deduplicated by file + page)
     # ---------------------------------------------------------
 
     sources = []
+    seen_sources = set()
 
     for document in documents:
-        source = document.metadata.get(
-            "source",
-            "Unknown",
-        )
+        source = document.metadata.get("source", "Unknown")
+        page = document.metadata.get("page", "Unknown")
 
-        page = document.metadata.get(
-            "page",
-            "Unknown",
-        )
+        key = (source, page)
+
+        if key in seen_sources:
+            continue
+
+        seen_sources.add(key)
 
         sources.append(
             {
@@ -323,13 +326,4 @@ def delete_document_vectors(
     user_id: int,
     document_id: int,
 ):
-    vector_store = get_vector_store()
-
-    vector_store.delete(
-        where={
-            "$and": [
-                {"user_id": user_id},
-                {"document_id": document_id},
-            ]
-        }
-    )
+    delete_vectors_for_document(user_id, document_id)
