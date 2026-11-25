@@ -3,7 +3,7 @@
 > An AI-powered academic question-answering system that uses Retrieval-Augmented Generation (RAG) to answer questions from student-provided study materials.
 ---
 ## 🌐 Live Demo
-- **Frontend:** https://edu-rag-academic-knowledge-assistant-9amyy75c5.vercel.app
+- **Frontend:** https://edu-rag-academic-knowledge-assistan.vercel.app
 - **Backend API docs:** https://edurag-backend-qx7v.onrender.com/docs
 ---
 ## 📌 Overview
